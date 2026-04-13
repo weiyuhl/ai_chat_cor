@@ -4,7 +4,9 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 
 pub mod agent;
+pub mod providers;
 pub use agent::{Agent, AgentConfig, AgentResult, BuiltinTool};
+pub use providers::*;
 
 #[derive(Error, Debug)]
 pub enum ChatError {
