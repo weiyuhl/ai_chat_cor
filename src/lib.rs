@@ -63,7 +63,7 @@ impl Default for ChatConfig {
         Self {
             api_url: "https://api.siliconflow.cn/v1/chat/completions".into(),
             api_key: String::new(),
-            model: "Qwen/Qwen2.5-7B-Instruct".into(),
+            model: String::new(),
             max_tokens: Some(1024),
             temperature: Some(0.7),
         }
@@ -300,6 +300,23 @@ mod ffi {
         }
     }
 
+    /// 获取默认配置（从 lib.rs 的 ChatConfig::default()）
+    #[no_mangle]
+    pub extern "system" fn Java_com_example_myapplication_AiChatClient_nativeGetDefaultConfig(
+        mut env: JNIEnv,
+        _class: JClass,
+    ) -> jstring {
+        let config = ChatConfig::default();
+        let json = format!(
+            r#"{{"api_url":"{}","model":"{}","max_tokens":{},"temperature":{}}}"#,
+            config.api_url,
+            config.model,
+            config.max_tokens.unwrap_or(0),
+            config.temperature.unwrap_or(0.7)
+        );
+        string_to_jstring(&mut env, &json)
+    }
+
     /// Agent 执行任务
     #[no_mangle]
     pub extern "system" fn Java_com_example_myapplication_AiChatClient_nativeAgentRun(
@@ -370,6 +387,7 @@ mod tests {
     #[test]
     fn test_default_config() {
         let config = ChatConfig::default();
-        assert_eq!(config.model, "Qwen/Qwen2.5-7B-Instruct");
+        assert_eq!(config.model, "");
+        assert_eq!(config.max_tokens, Some(1024));
     }
 }
