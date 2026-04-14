@@ -5,7 +5,7 @@ use std::sync::Mutex;
 
 pub mod agent;
 pub mod providers;
-pub use agent::{Agent, AgentConfig, AgentResult, BuiltinTool};
+pub use agent::{Agent, AgentConfig, AgentResult};
 pub use providers::*;
 
 #[derive(Error, Debug)]
@@ -379,11 +379,6 @@ mod ffi {
 
         let config = AgentConfig {
             max_iterations: max_iter,
-            tools: vec![
-                BuiltinTool::Calculator,
-                BuiltinTool::CurrentTime,
-                BuiltinTool::Echo,
-            ],
         };
 
         let agent = Agent::new(config);
