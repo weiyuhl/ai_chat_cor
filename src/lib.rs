@@ -300,24 +300,52 @@ mod ffi {
         }
     }
 
-    /// 获取默认配置（从 lib.rs 的 ChatConfig::default() 和 LLMProvider）
+    /// 获取供应商默认 API 地址（从 lib.rs 的 providers.rs）
     #[no_mangle]
     pub extern "system" fn Java_com_example_myapplication_AiChatClient_nativeGetDefaultConfig(
         mut env: JNIEnv,
         _class: JClass,
     ) -> jstring {
+        use providers::LLMProvider;
+        
         let config = ChatConfig::default();
+        // 返回供应商列表和对应的 API 地址
+        let providers_list = r#"["SiliconFlow","OpenRouter","DeepSeek","Custom"]"#;
+        let urls_json = format!(
+            r#"{{"SiliconFlow":"{}","OpenRouter":"{}","DeepSeek":"{}","Custom":""}}"#,
+            LLMProvider::SiliconFlow.default_base_url(),
+            LLMProvider::OpenRouter.default_base_url(),
+            LLMProvider::DeepSeek.default_base_url()
+        );
         let json = format!(
-            r#"{{"api_url":"{}","model":"{}","max_tokens":{},"temperature":{:.1},"providers":["SiliconFlow","OpenRouter","DeepSeek","Custom"],"provider_urls":{{"SiliconFlow":"{}","OpenRouter":"{}","DeepSeek":"{}","Custom":""}}}}"#,
+            r#"{{"api_url":"{}","model":"{}","max_tokens":{},"temperature":{:.1},"providers":{},"provider_urls":{}}}"#,
             config.api_url,
             config.model,
             config.max_tokens.unwrap_or(0),
             config.temperature.unwrap_or(0.7),
-            providers::LLMProvider::SiliconFlow.default_base_url(),
-            providers::LLMProvider::OpenRouter.default_base_url(),
-            providers::LLMProvider::DeepSeek.default_base_url()
+            providers_list,
+            urls_json
         );
         string_to_jstring(&mut env, &json)
+    }
+
+    /// 获取指定供应商的 API 地址
+    #[no_mangle]
+    pub extern "system" fn Java_com_example_myapplication_LLMProvider_00024Companion_nativeGetProviderBaseUrl(
+        mut env: JNIEnv,
+        _class: JClass,
+        provider_name: jstring,
+    ) -> jstring {
+        use providers::LLMProvider;
+        
+        let name = jstring_to_string(&mut env, provider_name);
+        let url = match name.as_str() {
+            "SiliconFlow" => LLMProvider::SiliconFlow.default_base_url(),
+            "OpenRouter" => LLMProvider::OpenRouter.default_base_url(),
+            "DeepSeek" => LLMProvider::DeepSeek.default_base_url(),
+            _ => "",
+        };
+        string_to_jstring(&mut env, url)
     }
 
     /// Agent 执行任务
