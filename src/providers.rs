@@ -262,6 +262,35 @@ pub trait SiliconFlowExt: OpenAICompatClient {
     ) -> Result<Vec<ModelInfo>, ClientError>;
 }
 
+// ===== DeepSeek 专属接口 =====
+
+/// DeepSeek 余额查询响应
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeepSeekBalanceResponse {
+    #[serde(rename = "is_available")]
+    pub is_available: bool,
+    #[serde(rename = "balance_infos")]
+    pub balance_infos: Vec<DeepSeekBalanceItem>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DeepSeekBalanceItem {
+    pub currency: String,
+    #[serde(rename = "total_balance")]
+    pub total_balance: String,
+    #[serde(rename = "granted_balance")]
+    pub granted_balance: String,
+    #[serde(rename = "topped_up_balance")]
+    pub topped_up_balance: String,
+}
+
+/// DeepSeek 客户端扩展接口
+pub trait DeepSeekExt: OpenAICompatClient {
+    /// 查询账户余额
+    /// GET /user/balance
+    fn get_balance(&self) -> Result<BalanceInfo, ClientError>;
+}
+
 // ===== OpenRouter 专属接口 =====
 
 /// OpenRouter 模型端点信息

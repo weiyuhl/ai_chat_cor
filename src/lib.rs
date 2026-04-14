@@ -7,6 +7,7 @@ pub mod agent;
 pub mod providers;
 pub use agent::{Agent, AgentConfig, AgentResult};
 pub use providers::*;
+pub use providers::{DeepSeekBalanceResponse, DeepSeekBalanceItem, DeepSeekExt};
 
 #[derive(Error, Debug)]
 pub enum ChatError {
@@ -394,6 +395,76 @@ mod ffi {
             result.success,
             escape_json(&result.answer),
             steps_json.join(",")
+        );
+
+        string_to_jstring(&mut env, &json)
+    }
+
+    /// 查询账户余额（DeepSeek）
+    #[no_mangle]
+    pub extern "system" fn Java_com_example_myapplication_AiChatClient_nativeGetBalance(
+        mut env: JNIEnv,
+        _class: JClass,
+        client_id: jstring,
+    ) -> jstring {
+        use providers::DeepSeekBalanceResponse;
+
+        let id_str = jstring_to_string(&mut env, client_id);
+        let client_id: i64 = match id_str.parse() {
+            Ok(id) => id,
+            Err(_) => return string_to_jstring(&mut env, r#"{"error":"Invalid client ID"}"#),
+        };
+
+        let clients = CLIENTS.lock().unwrap();
+        let client = match clients.get(&client_id) {
+            Some(c) => c,
+            None => return string_to_jstring(&mut env, r#"{"error":"Client not found"}"#),
+        };
+
+        // 构建余额查询 URL: baseUrl + "/user/balance"
+        let base_url = &client.config.api_url;
+        // 移除 /v1/chat/completions 路径，保留 baseUrl
+        let base = if base_url.contains("/v1/") {
+            base_url.split("/v1/").next().unwrap_or(base_url)
+        } else {
+            base_url
+        };
+        let balance_url = format!("{}/user/balance", base);
+
+        let response = match client.client
+            .get(&balance_url)
+            .header("Authorization", format!("Bearer {}", client.config.api_key))
+            .header("Accept", "application/json")
+            .send()
+        {
+            Ok(resp) => resp,
+            Err(e) => return string_to_jstring(&mut env, &format!(r#"{{"error":"{}"}}"#, e)),
+        };
+
+        if response.status().as_u16() != 200 {
+            return string_to_jstring(&mut env, &format!(
+                r#"{{"error":"API error (status: {})"}}"#,
+                response.status()
+            ));
+        }
+
+        let balance_resp: DeepSeekBalanceResponse = match response.json() {
+            Ok(b) => b,
+            Err(e) => return string_to_jstring(&mut env, &format!(r#"{{"error":"{}"}}"#, e)),
+        };
+
+        // 转换为 BalanceInfo 格式
+        let balances_json: Vec<String> = balance_resp.balance_infos.iter().map(|b| {
+            format!(
+                r#"{{"currency":"{}","total_balance":"{}","granted_balance":"{}","topped_up_balance":"{}"}}"#,
+                b.currency, b.total_balance, b.granted_balance, b.topped_up_balance
+            )
+        }).collect();
+
+        let json = format!(
+            r#"{{"is_available":{},"balances":[{}]}}"#,
+            balance_resp.is_available,
+            balances_json.join(",")
         );
 
         string_to_jstring(&mut env, &json)
