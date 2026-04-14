@@ -300,19 +300,26 @@ mod ffi {
         }
     }
 
-    /// 获取默认配置（从 lib.rs 的 ChatConfig::default()）
+    /// 获取默认配置（从 lib.rs 的 ChatConfig::default() 和 LLMProvider）
     #[no_mangle]
     pub extern "system" fn Java_com_example_myapplication_AiChatClient_nativeGetDefaultConfig(
         mut env: JNIEnv,
         _class: JClass,
     ) -> jstring {
         let config = ChatConfig::default();
+        let provider = providers::LLMProvider::SiliconFlow;
         let json = format!(
-            r#"{{"api_url":"{}","model":"{}","max_tokens":{},"temperature":{}}}"#,
+            r#"{{"api_url":"{}","model":"{}","max_tokens":{},"temperature":{:.1},"providers":["SiliconFlow","OpenRouter","DeepSeek","Generic"],"provider_urls":{{"SiliconFlow":"{}","OpenRouter":"{}","DeepSeek":"{}","Generic":""}},"provider_models":{{"SiliconFlow":"{}","OpenRouter":"{}","DeepSeek":"{}","Generic":""}}}}"#,
             config.api_url,
             config.model,
             config.max_tokens.unwrap_or(0),
-            config.temperature.unwrap_or(0.7)
+            config.temperature.unwrap_or(0.7),
+            provider.default_base_url(),
+            providers::LLMProvider::OpenRouter.default_base_url(),
+            providers::LLMProvider::DeepSeek.default_base_url(),
+            providers::LLMProvider::SiliconFlow.default_model(),
+            providers::LLMProvider::OpenRouter.default_model(),
+            providers::LLMProvider::DeepSeek.default_model()
         );
         string_to_jstring(&mut env, &json)
     }

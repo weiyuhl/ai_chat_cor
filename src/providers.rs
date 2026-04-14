@@ -183,6 +183,28 @@ impl LLMProvider {
             LLMProvider::Generic => "Generic",
         }
     }
+
+    /// 获取供应商默认 API 地址
+    pub fn default_base_url(&self) -> &str {
+        match self {
+            LLMProvider::SiliconFlow => "https://api.siliconflow.cn",
+            LLMProvider::OpenRouter => "https://openrouter.ai/api",
+            LLMProvider::OpenAI => "https://api.openai.com",
+            LLMProvider::DeepSeek => "https://api.deepseek.com",
+            LLMProvider::Generic => "",
+        }
+    }
+
+    /// 获取供应商默认模型名称
+    pub fn default_model(&self) -> &str {
+        match self {
+            LLMProvider::SiliconFlow => "Qwen/Qwen2.5-7B-Instruct",
+            LLMProvider::OpenRouter => "openai/gpt-4o",
+            LLMProvider::OpenAI => "gpt-4o",
+            LLMProvider::DeepSeek => "deepseek-chat",
+            LLMProvider::Generic => "",
+        }
+    }
 }
 
 // ===== OpenAI 兼容基础接口 =====
