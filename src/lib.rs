@@ -307,19 +307,15 @@ mod ffi {
         _class: JClass,
     ) -> jstring {
         let config = ChatConfig::default();
-        let provider = providers::LLMProvider::SiliconFlow;
         let json = format!(
-            r#"{{"api_url":"{}","model":"{}","max_tokens":{},"temperature":{:.1},"providers":["SiliconFlow","OpenRouter","DeepSeek","Generic"],"provider_urls":{{"SiliconFlow":"{}","OpenRouter":"{}","DeepSeek":"{}","Generic":""}},"provider_models":{{"SiliconFlow":"{}","OpenRouter":"{}","DeepSeek":"{}","Generic":""}}}}"#,
+            r#"{{"api_url":"{}","model":"{}","max_tokens":{},"temperature":{:.1},"providers":["SiliconFlow","OpenRouter","DeepSeek","Custom"],"provider_urls":{{"SiliconFlow":"{}","OpenRouter":"{}","DeepSeek":"{}","Custom":""}}}}"#,
             config.api_url,
             config.model,
             config.max_tokens.unwrap_or(0),
             config.temperature.unwrap_or(0.7),
-            provider.default_base_url(),
+            providers::LLMProvider::SiliconFlow.default_base_url(),
             providers::LLMProvider::OpenRouter.default_base_url(),
-            providers::LLMProvider::DeepSeek.default_base_url(),
-            providers::LLMProvider::SiliconFlow.default_model(),
-            providers::LLMProvider::OpenRouter.default_model(),
-            providers::LLMProvider::DeepSeek.default_model()
+            providers::LLMProvider::DeepSeek.default_base_url()
         );
         string_to_jstring(&mut env, &json)
     }
