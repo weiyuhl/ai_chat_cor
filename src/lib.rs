@@ -60,8 +60,13 @@ pub struct ChatConfig {
 
 impl Default for ChatConfig {
     fn default() -> Self {
+        // 使用 providers.rs 中定义的供应商 API 地址
+        let default_api_url = format!(
+            "{}/v1/chat/completions",
+            providers::LLMProvider::SiliconFlow.default_base_url()
+        );
         Self {
-            api_url: "https://api.siliconflow.cn/v1/chat/completions".into(),
+            api_url: default_api_url,
             api_key: String::new(),
             model: String::new(),
             max_tokens: Some(1024),
